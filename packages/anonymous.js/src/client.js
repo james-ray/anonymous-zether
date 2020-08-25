@@ -7,7 +7,7 @@ const bn128 = require('./utils/bn128.js');
 var sleep = (wait) => new Promise((resolve) => { setTimeout(resolve, wait); });
 
 class Client {
-    constructor(web3, zsc, home) {
+    constructor(web3, zsc, home, zetherVerifier) {
         if (web3 === undefined)
             throw "Constructor's first argument should be an initialized Web3 object.";
         if (zsc === undefined)
@@ -271,8 +271,39 @@ class Client {
                         var proof = service.proveTransfer(CLn, CRn, C, D, y, state.lastRollOver, account.keypair['x'], r, value, state.available - value, index);
                         var u = bn128.serialize(utils.u(state.lastRollOver, account.keypair['x']));
                         var throwaway = web3.eth.accounts.create();
-                        var encoded = zsc.methods.transfer(C, D, y, u, proof).encodeABI();
-                        var tx = { 'to': zsc._address, 'data': encoded, 'gas': 54700000, 'nonce': 0 };
+                        if (size > 2) {
+                            var throwaway = web3.eth.accounts.create();
+                            var encoded = zetherVerifier.methods.verifyTransfer(CLn, CRn, C, D, y, state.lastRollOver, u, proof).encodeABI();
+                            var tx = {
+                                'to': zetherVerifier._address,
+                                'data': encoded,
+                                'gas': 54700000,
+                                'nonce': 0,
+                                'gasPrice': 0
+                            };
+                            console.log("======transfer! experiment begin")
+                            web3.eth.accounts.signTransaction(tx, throwaway.privateKey).then((signed) => {
+                                web3.eth.sendSignedTransaction(signed.rawTransaction)
+                                    .on('transactionHash', (hash) => {
+                                        that._transfers.add(hash);
+                                        console.log("Transfer submitted (txHash = \"" + hash + "\").");
+                                    })
+                                    .on('receipt', (receipt) => {
+                                        // that.account._state = that.account._simulate(that._getEpoch(receipt.blockNumber)); // have to freshly call it
+                                        // that.account._state.nonceUsed = true;
+                                        // that.account._state.pending -= value;
+                                        console.log("Transfer of " + value + " was successful. Balance now " + (that.account._state.available + that.account._state.pending) + ".");
+                                        resolve(receipt);
+                                    })
+                                    .on('error', (error) => {
+                                        console.log("Transfer failed: " + error);
+                                        reject(error);
+                                    });
+                            });
+                            console.log("======transfer! experiment end")
+                        }
+                        /*var encoded = zsc.methods.transfer(C, D, y, u, proof).encodeABI();
+                        var tx = { 'to': zsc._address, 'data': encoded, 'gas': 54700000, 'nonce': 0 , 'gasPrice': 0 };
                         web3.eth.accounts.signTransaction(tx, throwaway.privateKey).then((signed) => {
                             web3.eth.sendSignedTransaction(signed.rawTransaction)
                                 .on('transactionHash', (hash) => {
@@ -290,7 +321,7 @@ class Client {
                                     console.log("Transfer failed: " + error);
                                     reject(error);
                                 });
-                        });
+                        });*/
                     });
             });
         };
