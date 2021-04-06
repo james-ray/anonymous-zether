@@ -18,18 +18,18 @@ const run = async () => {
         return Promise.all([deployer.deployZetherVerifier(ip), deployer.deployBurnVerifier(ip)]).then((results) => results.map((result) => result.contractAddress));
     })]);
 
-    const zsc = await Promise.all([deployer.deployZSC(cash, zether, burn, 6), deployer.mintCashToken(cash, 100000)]).then((results) => results[0].contractAddress);
-    await deployer.approveCashToken(cash, zsc, 1000);
+    const zsc = await Promise.all([deployer.deployZSC(cash, zether, burn, 6), deployer.mintCashToken(cash, 1000)]).then((results) => results[0].contractAddress);
+    await deployer.approveCashToken(cash, zsc, 10000);
     const deployed = new web3.eth.Contract(ZSC.abi, zsc);
 
     const alice = new Client(web3, deployed, accounts[0]);
     await alice.register();
-    await alice.deposit(100);
+    await alice.deposit(1000);
     await alice.withdraw(10);
     const bob = new Client(web3, deployed, accounts[0]);
     await bob.register();
     alice.friends.add("Bob", bob.account.public());
-    await alice.deposit(10000);
+    await alice.deposit(1000);
 
     for (var i = 0; i < 3; i ++){
         var j = i + 1;
