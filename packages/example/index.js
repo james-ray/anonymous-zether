@@ -19,17 +19,18 @@ const run = async () => {
     })]);
 
     const zsc = await Promise.all([deployer.deployZSC(cash, zether, burn, 6), deployer.mintCashToken(cash, 1000)]).then((results) => results[0].contractAddress);
-    await deployer.approveCashToken(cash, zsc, 1000);
+    await deployer.approveCashToken(cash, zsc, 100000);
     const deployed = new web3.eth.Contract(ZSC.abi, zsc);
 
     const alice = new Client(web3, deployed, accounts[0]);
     await alice.register();
-    await alice.deposit(100);
-    await alice.withdraw(10);
+    await alice.deposit(1000);
+
     const bob = new Client(web3, deployed, accounts[0]);
     await bob.register();
     alice.friends.add("Bob", bob.account.public());
-    await alice.transfer('Bob', 10);
+   // await alice.withdraw(10);
+    await alice.transfer('Bob', 100);
 };
 
 run().catch(console.error);
