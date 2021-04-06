@@ -18,7 +18,7 @@ const run = async () => {
         return Promise.all([deployer.deployZetherVerifier(ip), deployer.deployBurnVerifier(ip)]).then((results) => results.map((result) => result.contractAddress));
     })]);
 
-    const zsc = await Promise.all([deployer.deployZSC(cash, zether, burn, 6), deployer.mintCashToken(cash, 1000)]).then((results) => results[0].contractAddress);
+    const zsc = await Promise.all([deployer.deployZSC(cash, zether, burn, 6), deployer.mintCashToken(cash, 100000)]).then((results) => results[0].contractAddress);
     await deployer.approveCashToken(cash, zsc, 1000);
     const deployed = new web3.eth.Contract(ZSC.abi, zsc);
 
@@ -29,7 +29,17 @@ const run = async () => {
     const bob = new Client(web3, deployed, accounts[0]);
     await bob.register();
     alice.friends.add("Bob", bob.account.public());
-    await alice.transfer('Bob', 10);
+    await alice.deposit(10000);
+
+    for (var i = 0; i < 3; i ++){
+        var j = i + 1;
+        console.log("=================================第" + j +"次循环=========================================");
+        //await alice.withdraw(3);
+        //await alice.transfer('Bob', 1000000);
+        await alice.transfer('Jack', 200, ["Billy", "Bob"]);
+        //await alice.transfer('Billy2', 2, ["Billy", "Jack", "Billy1", "Jack1", "Bob", "Jack2"]);
+        //await alice.transfer('Jack5', 4, ["Billy", "Jack", "Billy1", "Jack1", "Bob", "Billy2", "Jack2","Billy3", "Jack3","Billy4", "Jack4","Billy5", "Billy6", "Jack6"]);
+    }
 };
 
 run().catch(console.error);
